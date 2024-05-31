@@ -1,13 +1,34 @@
-class Sensor {}
+class Sensor {
+    constructor(id, name, type, value, unit, update_at){
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.value = value;
+        this.unit = unit;
+        this.update_at = update_at;
+    }
+
+    // Funcion para actualizar los campos value y updated_at
+    set updateValue(newValue) {
+        const valoresPermitidos = ['temperature', 'humidity', 'pressure'];
+        // verifico si el valor de this.type está incluido en la lista valoresPermitidos
+        if (!valoresPermitidos.includes(this.type)) { 
+            console.log('Tipo de sensor no válido');
+        }
+        this.value = newValue.value; // Actualizar el valor del sensor
+        this.updated_at = new Date().toISOString(); // Actualizar la fecha de actualizacion
+    }
+
+}
 
 class SensorManager {
     constructor() {
         this.sensors = [];
     }
 
-    addSensor(sensor) {
-        this.sensors.push(sensor);
-    }
+    // addSensor(sensor) {
+    //     this.sensors.push(sensor);
+    // }
 
     updateSensor(id) {
         const sensor = this.sensors.find((sensor) => sensor.id === id);
@@ -33,12 +54,37 @@ class SensorManager {
         }
     }
 
-    async loadSensors(url) {}
+    async loadSensors(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.log('Sin respuesta...');
+            }
+            const data = await response.json();
+            // console.log(data)
+            /* No hago uso de la funcion addSensor() porque con map() puedo ir creando
+            instancias de la clase Sensor por cada elemento que iteramos. */
+            this.sensors = data.map(sensor => new Sensor(
+                sensor.id,
+                sensor.name,
+                sensor.type,
+                sensor.value,
+                sensor.unit,
+                sensor.updated_at
+            ));
+            //console.log(this.sensors) // [Sensor, Sensor, Sensor]
+            this.render();
+        } catch (error) {
+            console.error('Ocurrio un error: ', error);
+        }
+        
+    }
 
     render() {
         const container = document.getElementById("sensor-container");
         container.innerHTML = "";
         this.sensors.forEach((sensor) => {
+            // console.log(sensor)
             const sensorCard = document.createElement("div");
             sensorCard.className = "column is-one-third";
             sensorCard.innerHTML = `
@@ -86,5 +132,4 @@ class SensorManager {
 }
 
 const monitor = new SensorManager();
-
 monitor.loadSensors("sensors.json");
