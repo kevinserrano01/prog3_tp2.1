@@ -108,8 +108,6 @@ class Board {
 
         this.shuffleCards();
     }
-
-    
 }
 
 
