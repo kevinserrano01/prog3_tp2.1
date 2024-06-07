@@ -5,7 +5,8 @@ class Card {
         this.isFlipped = false;
         this.element = this.#createCardElement();
     }
-
+    
+    // Metodos privados
     #createCardElement() {
         const cardElement = document.createElement("div");
         cardElement.classList.add("cell");
@@ -20,6 +21,24 @@ class Card {
           </div>
       `;
         return cardElement;
+    }
+
+    // Implemente esta funcion ya que si reinicio el juego con toggleFlip() Las cartas que adivine no se dan vuelta cuando reinicio el juego.
+    ocultarCartas(){
+        this.#unflip();
+    }
+
+    toggleFlip() {
+        this.isFlipped = !this.isFlipped; // cambia el estado de la carta de volteada a no volteada y viceversa
+        if (this.isFlipped) {
+            this.#flip();
+        } else {
+            this.#unflip();
+        }
+    }
+
+    matches(otherCard){
+        return this.name === otherCard.name;
     }
 
     #flip() {
@@ -43,13 +62,10 @@ class Board {
     #calculateColumns() {
         const numCards = this.cards.length;
         let columns = Math.floor(numCards / 2);
-
         columns = Math.max(2, Math.min(columns, 12));
-
         if (columns % 2 !== 0) {
             columns = columns === 11 ? 12 : columns - 1;
         }
-
         return columns;
     }
 
@@ -70,11 +86,32 @@ class Board {
     }
 
     onCardClicked(card) {
-        if (this.onCardClick) {
+        if (this.onCardClicked) {
+            console.log(`Click en la carta con la imagen de ${card.name}`)
             this.onCardClick(card);
         }
     }
+
+    shuffleCards() {
+        for (let i = this.cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1)); // Genero un indice aleatorio entre 0 e i
+            [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]]; // Intercambia las cartas en las posiciones i y j
+        }
+        this.render(); // Vuelvo a renderizar las cartas en el tablero para reflejar el nuevo orden
+    }
+
+    reset() {
+        this.cards.forEach((card) => {
+            card.isFlipped = false; // Pongo todas las cartas como no volteadas
+            card.ocultarCartas();
+        });
+
+        this.shuffleCards();
+    }
+
+    
 }
+
 
 class MemoryGame {
     constructor(board, flipDuration = 500) {
@@ -102,11 +139,35 @@ class MemoryGame {
             }
         }
     }
+
+    checkForMatch() {
+        if (this.flippedCards.length === 2) {
+            const [card1, card2] = this.flippedCards;
+
+            if (card1.name === card2.name) {
+                this.matchedCards.push(card1, card2);
+                this.flippedCards = [];
+            } else {
+                setTimeout(() => {
+                    card1.toggleFlip();
+                    card2.toggleFlip();
+                    this.flippedCards = [];
+                }, this.flipDuration);
+            }
+        }
+    }
+
+    resetGame() {
+        this.board.reset();
+        this.matchedCards = [];
+        this.flippedCards = [];
+        console.log("Juego Reiniciado")
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     const cardsData = [
-        { name: "Python", img: "./img/Python.svg" },
+        { name: "Python", img: "./img/Python.png" },
         { name: "JavaScript", img: "./img/JS.svg" },
         { name: "Java", img: "./img/Java.svg" },
         { name: "CSharp", img: "./img/CSharp.svg" },
